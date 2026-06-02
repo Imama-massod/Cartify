@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Toys - Cartify Catalog</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../shared/css/base.css">
+    
+    <style>
+        .shop-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+            min-height: 60vh;
+            min-width: 0;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-white);
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            align-self: flex-start;
+            position: sticky;
+            top: 100px;
+        }
+
+        .filter-group {
+            margin-bottom: 30px;
+        }
+
+        .filter-group h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #F4F6F9;
+        }
+
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .filter-item:hover, .filter-item.active {
+            color: var(--primary-blue);
+        }
+
+        .filter-item input[type="radio"] {
+            accent-color: var(--accent-yellow);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Product Grid Region */
+        .catalog-region {
+            flex: 1;
+        }
+
+        .catalog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-8px);
+        }
+
+        .product-image {
+            height: 220px;
+            background-color: #F8F9FA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.1);
+        }
+
+        .product-details {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            grid-column: 1 / -1;
+        }
+
+        /* ===== MOBILE FILTER DRAWER ===== */
+        .mobile-filter-bar {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            background: white;
+            padding: 10px 16px;
+            border-bottom: 1px solid #eee;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mobile-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius-pill);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 900;
+        }
+
+        .sidebar-overlay.active { display: block; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .catalog-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-filter-bar { display: flex; align-items: center; justify-content: space-between; }
+
+            .shop-container { flex-direction: column; gap: 0; margin-top: 10px; }
+
+            /* Sidebar becomes a slide-in drawer */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -320px;
+                height: 100%;
+                width: 290px;
+                z-index: 1000;
+                border-radius: 0;
+                overflow-y: auto;
+                transition: left 0.3s ease;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+            }
+
+            .sidebar.open { left: 0; }
+
+            .catalog-region { width: 100%; }
+
+            .catalog-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+
+            .catalog-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .catalog-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .product-image { height: 170px; }
+
+            .product-details { padding: 12px; }
+
+            .product-title { font-size: 0.92rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- REUSABLE MAIN HEADER -->
+    <header class="main-header">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
+            <a href="index.html" class="logo-wrapper">
+                <img src="../assets/images/logo.png" alt="Cartify Logo">
+            </a>
+            
+            <div id="authLinks" style="display: flex; gap: 20px; font-weight: bold; align-items: center;">
+                <a href="index.html" style="color: var(--text-muted)">Home</a>
+                <!-- JS will inject Auth states here -->
+            </div>
+
+            <div class="header-actions">
+                <div class="action-icon" onclick="window.location.href='wishlist.html'" title="My Wishlist" style="cursor:pointer;">
+                    <i class="fa fa-heart" style="color:#e53935;"></i>
+                    <span class="cart-badge" id="wishlistCount" style="background:#e53935;">0</span>
+                </div>
+                <div class="action-icon" onclick="window.location.href='cart.html'">
+                    <i class="fa fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE FILTER BAR (hidden on desktop) -->
+    <div class="mobile-filter-bar" id="mobileFilterBar">
+        <button class="mobile-filter-btn" onclick="toggleFilterDrawer()">
+            <i class="fa fa-sliders-h"></i> Filter & Sort
+        </button>
+        <span id="mobileResultCount" style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Loading...</span>
+    </div>
+
+    <!-- Overlay behind drawer -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeFilterDrawer()"></div>
+
+    <div class="container shop-container">
+        
+        <!-- FILTERS SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="filter-group">
+                <h3>Shop Categories</h3>
+                <div class="filter-list" id="categoryFilters">
+                    <label class="filter-item">
+                        <input type="radio" name="cat" value="all" checked onchange="applyFilters()">
+                        <span style="font-weight:800; color:var(--primary-blue)">All Toys</span>
+                    </label>
+                    <div style="font-size:0.8rem; color: #999; margin: 5px 0;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Age Range</h3>
+                <div class="filter-list">
+                    <label class="filter-item"><input type="radio" name="age" value="" checked onchange="applyFilters()"> Any Age</label>
+                    <label class="filter-item"><input type="radio" name="age" value="0-2" onchange="applyFilters()"> 0 - 2 Years</label>
+                    <label class="filter-item"><input type="radio" name="age" value="3-4" onchange="applyFilters()"> 3 - 4 Years</label>
+                    <label class="filter-item"><input type="radio" name="age" value="5-7" onchange="applyFilters()"> 5 - 7 Years</label>
+                    <label class="filter-item"><input type="radio" name="age" value="8-11" onchange="applyFilters()"> 8 - 11 Years</label>
+                    <label class="filter-item"><input type="radio" name="age" value="12+" onchange="applyFilters()"> 12+ Years</label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Special Filters</h3>
+                <div class="filter-list">
+                    <label class="filter-item"><input type="checkbox" id="flashSaleFilter" onchange="applyFilters()"> Flash Sale Only ⚡</label>
+                    <label class="filter-item"><input type="checkbox" id="trendingFilter" onchange="applyFilters()"> Trending Hot 🔥</label>
+                </div>
+            </div>
+            <!-- Close button visible only on mobile -->
+            <div style="display:none;" class="sidebar-close-wrap">
+                <button onclick="closeFilterDrawer()" style="width:100%;padding:12px;margin-top:10px;background:var(--primary-blue);color:white;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;">
+                    <i class="fa fa-check"></i> Apply Filters
+                </button>
+            </div>
+        </aside>
+
+        <!-- CATALOG GRID -->
+        <main class="catalog-region">
+            <div class="catalog-header">
+                <h1 style="font-size: 2rem; color: var(--primary-blue);" id="catalogTitle">All Products</h1>
+                <div style="color: var(--text-muted); font-weight: bold;" id="resultCount">0 items</div>
+            </div>
+
+            <div class="catalog-grid" id="productGrid">
+                <!-- Products Injected Here -->
+                <div class="empty-state">
+                    <i class="fa fa-circle-notch fa-spin fa-3x" style="color: var(--accent-yellow); margin-bottom: 20px;"></i>
+                    <p>Fetching amazing toys from the database...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+    <script>
+        function toggleFilterDrawer() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+        function closeFilterDrawer() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
+            
+            // Check URL params for deep clicking from Homepage
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialCat = urlParams.get('cat');
+            const initialAge = urlParams.get('age');
+
+            if(initialCat) {
+                const rb = document.querySelector(`input[name="cat"][value="${initialCat}"]`);
+                if(rb) rb.checked = true;
+            }
+            if(initialAge) {
+                const ageRb = document.querySelector(`input[name="age"][value="${initialAge}"]`);
+                if(ageRb) ageRb.checked = true;
+            }
+
+            applyFilters(); 
+        });
+
+        async function loadCategories() {
+            try {
+                const res = await apiFetch('/categories');
+                const catList = document.getElementById('categoryFilters');
+                // Keep the "All" button
+                const allHTML = catList.innerHTML.split('</label>')[0] + '</label>';
+                let optionsHTML = '';
+
+                if(res.success && res.data) {
+                    res.data.forEach(c => {
+                        optionsHTML += `
+                            <label class="filter-item">
+                                <input type="radio" name="cat" value="${c.id}" onchange="applyFilters()">
+                                <span>${c.name}</span>
+                            </label>
+                        `;
+                    });
+                }
+                catList.innerHTML = allHTML + optionsHTML;
+            } catch(e) {
+                console.error("Cats load error");
+            }
+        }
+
+        async function applyFilters() {
+            const grid = document.getElementById('productGrid');
+            const countLabel = document.getElementById('resultCount');
+            const catTitle = document.getElementById('catalogTitle');
+
+            // Collect filter states
+            const catRadios = document.querySelectorAll('input[name="cat"]:checked');
+            const ageRadios = document.querySelectorAll('input[name="age"]:checked');
+            
+            const selectedCat = catRadios.length ? catRadios[0].value : 'all';
+            const selectedAge = ageRadios.length ? ageRadios[0].value : '';
+            const flash = document.getElementById('flashSaleFilter').checked;
+            const trend = document.getElementById('trendingFilter').checked;
+
+            // Construct Query URL
+            let queryUrl = '/products?';
+            if (selectedCat !== 'all') queryUrl += `category_id=${selectedCat}&`;
+            if (selectedAge !== '') queryUrl += `age_group=${selectedAge}&`;
+            if (flash) queryUrl += `is_flash_sale=true&`;
+            if (trend) queryUrl += `is_trending=true&`;
+
+            try {
+                grid.innerHTML = '<div class="empty-state"><i class="fa fa-circle-notch fa-spin fa-3x"></i></div>';
+                
+                // Update Title visually based on radio label
+                if(selectedCat !== 'all') {
+                    catTitle.innerText = catRadios[0].nextElementSibling.innerText + " Toys";
+                } else {
+                    catTitle.innerText = "All Products Catalog";
+                }
+
+                const res = await apiFetch(queryUrl);
+
+                if (res.success && res.data.length > 0) {
+                    countLabel.innerText = `${res.count} items found`;
+                    grid.innerHTML = '';
+                    
+                    res.data.forEach(p => {
+                        const imgUrl = p.primary_image ? `http://localhost:5000${p.primary_image}` : 'https://placehold.co/400?text=No+Photo';
+
+                        // Effective selling price: flash_sale_price > discount_price > price
+                        let salePrice = null;
+                        if (p.is_flash_sale && p.flash_sale_price) {
+                            salePrice = p.flash_sale_price;
+                        } else if (p.discount_price) {
+                            salePrice = p.discount_price;
+                        }
+
+                        const finalPrice = salePrice
+                            ? `<span style="text-decoration:line-through; color:#aaa; font-size:0.9rem; font-weight:normal;">Rs ${p.price.toFixed(0)}</span><br><span style="color:#e53935; font-size:1.3rem; font-weight:900;">Rs ${salePrice.toFixed(0)}</span>`
+                            : `Rs ${p.price.toFixed(0)}`;
+
+                        let badges = '';
+                        if(p.is_flash_sale) badges += '<span style="position:absolute; top:10px; left:10px; background:#e53935; color:white; padding:4px 10px; border-radius:30px; font-weight:bold; font-size:0.8rem; z-index:2;">⚡ FLASH SALE</span>';
+                        if(p.is_trending) badges += '<span style="position:absolute; top:10px; right:10px; background:var(--accent-yellow); color:var(--primary-blue); padding:4px 10px; border-radius:30px; font-weight:bold; font-size:0.8rem; z-index:2;">🔥 TRENDING</span>';
+
+                        grid.innerHTML += `
+                            <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'">
+                                ${badges}
+                                <div class="product-image">
+                                    <img src="${imgUrl}" alt="${p.name}">
+                                </div>
+                                <div class="product-details">
+                                    <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px;">${p.category_name || ''}</div>
+                                    <div class="product-title">${p.name}</div>
+                                    <div class="product-price">${finalPrice}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    countLabel.innerText = `0 items found`;
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa fa-box-open fa-4x" style="color: #ddd; margin-bottom: 20px;"></i>
+                            <h3>No toys match your filters</h3>
+                            <p style="margin-top: 10px;">Try removing some filters to see more results.</p>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                grid.innerHTML = `<div class="empty-state" style="color: red;">Failed to load catalog.<br>${err.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

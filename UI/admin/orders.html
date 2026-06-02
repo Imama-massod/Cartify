@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Orders - Cartify Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="brand"><img src="../assets/images/logo.png" alt="Cartify"></div>
+        <ul class="nav-links">
+            <li><a href="index.html"><i class="fa fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="products.html"><i class="fa fa-box-open"></i> Product Catalog</a></li>
+            <li><a href="categories.html"><i class="fa fa-tags"></i> Categories</a></li>
+            <li class="active"><a href="orders.html"><i class="fa fa-shipping-fast"></i> Order Manager</a></li>
+            <li><a href="deals.html"><i class="fa fa-bolt"></i> Flash Sales</a></li>
+        </ul>
+        <ul class="nav-links" style="margin-top: auto; padding-bottom: 20px;">
+            <li><a href="../client/index.html" target="_blank"><i class="fa fa-external-link-alt"></i> View Store</a></li>
+            <li><a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 style="color: var(--bg-dark); font-size: 1.5rem;">Order Logistics Matrix</h1>
+                <p style="color: var(--text-light); font-size: 0.9rem;">View customer transactions and dispatch statuses</p>
+            </div>
+        </header>
+
+        <div class="data-card">
+            <div class="card-header">
+                <h3>Global Active Invoices</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Global ID</th>
+                        <th>Customer / Address</th>
+                        <th>Financial Transfer</th>
+                        <th>Current State</th>
+                        <th>Action Protocol</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTable">
+                    <!-- Injected via Fetch -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Order Details Modal -->
+    <div id="orderDetailsModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color:#fff; margin:5% auto; padding:20px; border-radius:8px; width:95%; max-width:800px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">
+                <h2 style="margin:0; color:var(--bg-dark);">Order Details: <span id="modalOrderNumber" style="color:var(--accent-blue);"></span></h2>
+                <span onclick="closeModal()" style="color:#aaa; font-size:28px; font-weight:bold; cursor:pointer;">&times;</span>
+            </div>
+            <div id="modalOrderContent">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-mobile.js"></script>
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ensureAdmin();
+            await fetchOrders();
+        });
+
+        async function ensureAdmin() {
+            try {
+                const res = await apiFetch('/auth/profile');
+                if(!res.success || res.data.role !== 'admin') window.location.href = '../client/login.html';
+            } catch(e) { window.location.href = '../client/login.html'; }
+        }
+
+        async function fetchOrders() {
+            try {
+                // Fetching via generic orders endpoint
+                const res = await apiFetch('/orders/all'); 
+                const tbody = document.getElementById('ordersTable');
+                
+                if(res.success && res.data && res.data.length > 0) {
+                    let html = '';
+                    res.data.forEach(o => {
+                        let badgeClass = 'pending';
+                        if(o.order_status === 'Shipped') badgeClass = 'shipped';
+                        if(o.order_status === 'Delivered') badgeClass = 'delivered';
+
+                        const selPending = o.order_status === 'Pending' ? 'selected' : '';
+                        const selShipped = o.order_status === 'Shipped' ? 'selected' : '';
+                        const selDeliv = o.order_status === 'Delivered' ? 'selected' : '';
+
+                        html += `
+                            <tr>
+                                <td><a href="#" style="color:var(--accent-blue); font-weight:bold;">${o.order_number}</a><br><small style="color:var(--text-light)">${new Date(o.order_date).toLocaleDateString()}</small></td>
+                                <td>
+                                    <strong>${o.customer_name}</strong><br>
+                                    <small style="color:var(--text-light)"><i class="fa fa-map-marker"></i> ${(o.address_street || '').substring(0,25)}...</small>
+                                </td>
+                                <td><div style="font-weight:bold; font-size:1.1rem; color:var(--text-main)">Rs ${o.total_amount.toFixed(0)}</div></td>
+                                <td><span class="status-badge ${badgeClass}" id="badge-${o.id}">${o.order_status}</span></td>
+                                <td>
+                                    <select onchange="updateStatus(${o.id}, this.value)" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border); font-family:'Inter'; outline:none; cursor:pointer;">
+                                        <option value="Pending" ${selPending}>Set Pending</option>
+                                        <option value="Shipped" ${selShipped}>Set Shipped</option>
+                                        <option value="Delivered" ${selDeliv}>Set Delivered</option>
+                                    </select>
+                                    <button onclick="viewOrderDetails(${o.id})" style="margin-left: 8px; padding: 6px 10px; background: var(--accent-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-family: 'Inter';"><i class="fa fa-eye"></i> Details</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Empty Matrix. No transactions detected.</td></tr>';
+                }
+            } catch(e) {
+                showToast("Connection to central SQL denied.", "error");
+            }
+        }
+
+        async function updateStatus(orderId, newStatus) {
+            try {
+                showToast(`Sending Request to switch Protocol to ${newStatus}...`, 'success');
+                // The backend endpoint PUT /api/orders/:id/status updates this. 
+                const res = await apiFetch(`/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ order_status: newStatus })
+                });
+
+                if(res.success) {
+                    showToast(`Order #${orderId} State synchronized.`, 'success');
+                    
+                    // Live UI update without full fetch
+                    const badge = document.getElementById(`badge-${orderId}`);
+                    badge.innerText = newStatus;
+                    badge.className = 'status-badge';
+                    if(newStatus === 'Pending') badge.classList.add('pending');
+                    if(newStatus === 'Shipped') badge.classList.add('shipped');
+                    if(newStatus === 'Delivered') badge.classList.add('delivered');
+                }
+            } catch(e) {
+                showToast(e.message || "Protocol Update Failed", "error");
+                await fetchOrders(); // Re-sync if failed
+            }
+        }
+
+        async function viewOrderDetails(id) {
+            try {
+                const res = await apiFetch(`/orders/${id}`);
+                if(res.success && res.data) {
+                    const o = res.data;
+                    document.getElementById('modalOrderNumber').innerText = o.order_number;
+                    
+                    let itemsHtml = '';
+                    if(o.items && o.items.length > 0) {
+                        itemsHtml = `
+                        <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+                            <thead>
+                                <tr style="background:#f9f9f9; text-align:left;">
+                                    <th style="padding:10px; border-bottom:1px solid #ddd;">Image</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd;">Product</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd;">Details (Size/Color)</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd;">Price & Qty</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        `;
+                        o.items.forEach(item => {
+                            const imgSrc = item.product_image ? `../shared/uploads/${item.product_image}` : '../assets/images/placeholder.jpg';
+                            itemsHtml += `
+                                <tr>
+                                    <td style="padding:10px; border-bottom:1px solid #eee;">
+                                        <img src="${imgSrc}" alt="${item.product_name}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
+                                    </td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee;"><strong>${item.product_name}</strong></td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee;">${item.size_name || 'N/A'} / ${item.color_name || 'N/A'}</td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee;">Rs ${parseFloat(item.price).toFixed(0)} x ${item.quantity}</td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">Rs ${parseFloat(item.total).toFixed(0)}</td>
+                                </tr>
+                            `;
+                        });
+                        itemsHtml += `</tbody></table>`;
+                    } else {
+                        itemsHtml = '<p>No items found for this order.</p>';
+                    }
+
+                    const content = `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                            <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
+                                <h3 style="margin-top:0; border-bottom:1px solid #ddd; padding-bottom:5px;">Customer Details</h3>
+                                <p><strong>Name:</strong> ${o.customer_name}</p>
+                                <p><strong>Email:</strong> ${o.customer_email || 'N/A'}</p>
+                                <p><strong>Phone:</strong> ${o.customer_phone || 'N/A'}</p>
+                            </div>
+                            <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
+                                <h3 style="margin-top:0; border-bottom:1px solid #ddd; padding-bottom:5px;">Shipping Address</h3>
+                                <p>${o.address_street}</p>
+                                <p>${o.address_city}, ${o.address_state} - ${o.address_pincode}</p>
+                            </div>
+                        </div>
+                        
+                        <h3 style="margin-top:30px; margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">Order Items</h3>
+                        ${itemsHtml}
+                        
+                        <div style="margin-top:20px; text-align:right; font-size:1.2rem;">
+                            <p><strong>Subtotal:</strong> Rs ${parseFloat(o.subtotal).toFixed(0)}</p>
+                            <p><strong>Shipping:</strong> Rs ${parseFloat(o.shipping_charge).toFixed(0)}</p>
+                            <p style="font-size:1.4rem; color:var(--accent-blue);"><strong>Total Charges:</strong> Rs ${parseFloat(o.total_amount).toFixed(0)}</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('modalOrderContent').innerHTML = content;
+                    document.getElementById('orderDetailsModal').style.display = 'block';
+                } else {
+                    showToast("Failed to fetch order details: " + (res.message || "Unknown Error"), "error");
+                }
+            } catch(e) {
+                showToast("Failed to fetch order details", "error");
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('orderDetailsModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

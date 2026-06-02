@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartify | Premium Kids Toys & Accessories</title>
+    <!-- Use FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../shared/css/base.css">
+    
+    <style>
+        /* Hero Section Styling Specific to the Homepage */
+        .hero {
+            background: linear-gradient(135deg, #FEF9D9 0%, #FFF5A3 100%);
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 5px solid var(--accent-yellow);
+        }
+
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hero-text {
+            max-width: 50%;
+            z-index: 2;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: var(--primary-blue);
+        }
+
+        .hero-text h1 span {
+            color: var(--accent-red);
+        }
+
+        .hero-text p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        /* Shop by Age Grids */
+        .age-grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+
+        .age-card {
+            background-color: white;
+            padding: 30px;
+            border-radius: 50%;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--shadow-hover);
+            cursor: pointer;
+            border: 4px solid transparent;
+        }
+
+        .age-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-5px);
+            border-color: var(--accent-yellow);
+        }
+
+        .age-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        /* Product Grids */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-8px);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 12px;
+            border-radius: var(--border-radius-pill);
+            font-weight: 800;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
+        .product-image {
+            height: 250px;
+            background-color: #F8F9FA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.1);
+        }
+
+        .product-details {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+
+        .flash-sale-banner {
+            background-color: var(--accent-cyan);
+            color: white;
+            padding: 40px 0;
+            margin: 80px 0;
+            text-align: center;
+            border-radius: var(--border-radius-lg);
+        }
+
+        /* Grab Deals Section */
+        .grab-deals-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin: 60px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .grab-deals-section::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -20%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,200,0,0.15), transparent);
+            pointer-events: none;
+        }
+        .grab-deals-section .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 35px;
+        }
+        .grab-deals-section h2 {
+            color: white;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .grab-deals-section h2 .badge-hot {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white; font-size: 0.85rem; padding: 4px 14px;
+            border-radius: 20px; font-weight: 700;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .grab-deal-card {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .grab-deal-card:hover {
+            background: rgba(255,255,255,0.13);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .grab-deal-card .deal-image {
+            height: 200px;
+            background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .grab-deal-card .deal-image img {
+            width: 80%; height: 80%; object-fit: contain;
+            transition: transform 0.4s ease;
+        }
+        .grab-deal-card:hover .deal-image img { transform: scale(1.1); }
+        .grab-deal-card .deal-info { padding: 18px; }
+        .grab-deal-card .deal-name {
+            color: white; font-weight: 700; font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .grab-deal-card .deal-price {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+        }
+        .grab-deal-card .deal-price .sale-price {
+            color: #ffd60a; font-size: 1.4rem; font-weight: 900;
+        }
+        .grab-deal-card .deal-price .orig-price {
+            color: rgba(255,255,255,0.45);
+            text-decoration: line-through; font-size: 0.9rem;
+        }
+        .grab-deal-card .discount-badge {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white; font-size: 0.75rem; font-weight: 800;
+            padding: 3px 10px; border-radius: 20px;
+        }
+        .grab-deal-card .btn-grab {
+            width: 100%; padding: 10px; border: none; border-radius: 8px;
+            background: linear-gradient(135deg, #ffd60a, #ffb700);
+            color: #1a1a2e; font-weight: 800; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .grab-deal-card .btn-grab:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .grab-deals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .no-deals-msg {
+            color: rgba(255,255,255,0.5); text-align: center;
+            padding: 40px; grid-column: 1/-1; font-size: 1.1rem;
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero { padding: 40px 0; overflow: hidden; }
+
+            .hero-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 25px;
+            }
+
+            .hero-text { max-width: 100%; }
+
+            .hero-text h1 { font-size: 2rem; }
+
+            .hero-image {
+                width: 65% !important;
+                max-width: 280px;
+                margin: 0 auto;
+            }
+
+            .age-grid { gap: 12px; margin-top: 25px; }
+
+            .age-card {
+                width: 110px;
+                height: 110px;
+                padding: 18px;
+            }
+
+            .age-card h3 { font-size: 1.2rem; }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+                margin-top: 25px;
+            }
+
+            .product-image { height: 190px; }
+
+            .grab-deals-section {
+                padding: 28px 18px;
+                margin: 35px 0;
+                border-radius: 16px;
+            }
+
+            .grab-deals-section .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .grab-deals-section h2 { font-size: 1.4rem; }
+
+            .grab-deals-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .grab-deal-card .deal-image { height: 150px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-text h1 { font-size: 1.65rem; }
+
+            .hero-image { width: 80% !important; }
+
+            .age-card {
+                width: 88px;
+                height: 88px;
+                padding: 12px;
+            }
+
+            .age-card h3 { font-size: 1rem; }
+
+            .grab-deals-grid { grid-template-columns: 1fr; }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .product-image { height: 160px; }
+
+            .product-details { padding: 12px; }
+
+            .product-title { font-size: 0.95rem; }
+
+            .product-price { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <div class="top-header">
+        <div class="container" style="display: flex; justify-content: space-between; width: 100%;">
+            <div>
+                <i class="fa fa-truck"></i> Free Shipping on orders over Rs 5000!
+            </div>
+            <div id="authLinks">
+                <a href="login.html"><i class="fa fa-user"></i> Login / Register</a>
+                <a href="#"><i class="fa fa-question-circle"></i> Support</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="main-header">
+        <div class="container">
+            <a href="index.html" class="logo-wrapper">
+                <img src="../assets/images/logo.png" alt="Cartify Logo">
+            </a>
+
+            <div class="search-bar">
+                <input type="text" placeholder="Search for toys, clothes, books..." id="searchInput">
+                <button type="button" onclick="searchToys()"><i class="fa fa-search"></i></button>
+            </div>
+
+            <div class="header-actions">
+                <div class="action-icon" onclick="window.location.href='wishlist.html'" title="My Wishlist" style="cursor:pointer; position:relative;">
+                    <i class="fa fa-heart" style="color:#e53935;"></i>
+                    <span class="cart-badge" id="wishlistCount" style="background:#e53935;">0</span>
+                </div>
+                <div class="action-icon" onclick="window.location.href='cart.html'">
+                    <i class="fa fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION CATS -->
+    <nav class="category-nav">
+        <div class="container">
+            <ul id="mainNav">
+                <li><a href="shop.html"><i class="fa fa-bars"></i> ALL CATEGORIES</a></li>
+                <!-- Dynamic Cats Will Inject Here -->
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1>Buy Children's Toys & Premium Clothes <br><span>UP TO 70% OFF</span></h1>
+                <p>Explore our massive Babymart collection featuring learning toys, wooden puzzles, outdoor gear, and high-quality accessories!</p>
+                <a href="shop.html" class="btn btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">Shop Now <i class="fa fa-arrow-right"></i></a>
+            </div>
+            <div class="hero-image" style="width: 40%;">
+                <!-- Cute illustration or photo of toys -->
+                <img src="../assets/images/logo.png" style="width: 100%; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.1));" alt="Toys">
+            </div>
+        </div>
+    </section>
+
+    <!-- SHOP BY AGE -->
+    <section class="container mt-4 mb-4">
+        <h2 class="section-title">Shop by Age</h2>
+        <p class="section-subtitle">Find the perfect developmental toys for their specific milestone</p>
+        
+        <div class="age-grid">
+            <div class="age-card" onclick="window.location.href='shop.html?age=0-2'">
+                <h3 style="color: #FF6B6B">0-2</h3>
+                <span class="text-muted">Years</span>
+            </div>
+            <div class="age-card" onclick="window.location.href='shop.html?age=3-4'">
+                <h3 style="color: #4ECDC4">3-4</h3>
+                <span class="text-muted">Years</span>
+            </div>
+            <div class="age-card" onclick="window.location.href='shop.html?age=5-7'">
+                <h3 style="color: #FFD166">5-7</h3>
+                <span class="text-muted">Years</span>
+            </div>
+            <div class="age-card" onclick="window.location.href='shop.html?age=8-11'">
+                <h3 style="color: #118AB2">8-11</h3>
+                <span class="text-muted">Years</span>
+            </div>
+            <div class="age-card" onclick="window.location.href='shop.html?age=12+'">
+                <h3 style="color: #073B4C">12+</h3>
+                <span class="text-muted">Years</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- GRAB DEALS NOW SECTION -->
+    <div class="container">
+        <div class="grab-deals-section">
+            <div class="section-header">
+                <h2>🛒 Grab Deals Now! <span class="badge-hot">HOT</span></h2>
+                <a href="shop.html" style="color: rgba(255,255,255,0.6); font-size:0.9rem; text-decoration:none;">View All &rarr;</a>
+            </div>
+            <div class="grab-deals-grid" id="grabDealsGrid">
+                <div class="no-deals-msg"><i class="fa fa-spinner fa-spin"></i><br><br>Loading deals...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRENDING TOYS -->
+    <section class="container mb-4">
+        <h2 class="section-title">Trending Toys Collection</h2>
+        <div class="product-grid" id="trendingProducts">
+            <!-- Products injected by JS -->
+            <div style="text-align: center; width: 100%; grid-column: 1 / -1; color: var(--text-muted); padding: 50px;">
+                <i class="fa fa-spinner fa-spin fa-3x"></i><br><br>Loading Toys from SQL Backend...
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <img src="../assets/images/logo.png" style="height: 40px; filter: brightness(0) invert(1); margin-bottom: 20px;">
+                    <p style="color: #BCD4EB">Your premium destination for high-quality, safe, and educational children's goods. We guarantee smiles with every delivery!</p>
+                </div>
+                <div class="footer-col" style="padding-left: 20px;">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Delivery Information</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Secure Payments</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Contact Center</h3>
+                    <ul>
+                        <li><i class="fa fa-map-marker" style="width: 20px;"></i> 123 Toy Street, Joy Lane, NY</li>
+                        <li><i class="fa fa-phone" style="width: 20px;"></i> +1 (800) CARTIFY</li>
+                        <li><i class="fa fa-envelope" style="width: 20px;"></i> smile@cartify.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Cartify E-commerce. Designed specifically matching Babymart Standard Themes.
+            </div>
+        </div>
+    </footer>
+
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        // Homepage Logic Controller
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
+            await loadGrabDeals();
+            await loadTrendingProducts();
+        });
+
+        async function loadCategories() {
+            try {
+                const res = await apiFetch('/categories');
+                if(res.success && res.data) {
+                    const nav = document.getElementById('mainNav');
+                    res.data.slice(0, 5).forEach(cat => {
+                        nav.innerHTML += `<li><a href="shop.html?cat=${cat.id}">${cat.name.toUpperCase()}</a></li>`;
+                    });
+                }
+            } catch(e) { console.error("Categories failed", e); }
+        }
+
+        async function loadGrabDeals() {
+            try {
+                const res = await apiFetch('/products?is_grab_deal=1');
+                const grid = document.getElementById('grabDealsGrid');
+
+                if(res.success && res.data && res.data.length > 0) {
+                    grid.innerHTML = '';
+                    res.data.slice(0, 8).forEach(p => {
+                        const img = p.primary_image ? `http://localhost:5000${p.primary_image}` : 'https://placehold.co/400?text=Deal';
+                        // Effective price: flash_sale_price > discount_price > price
+                        let effectivePrice = p.price;
+                        let originalPrice = p.price;
+                        if (p.is_flash_sale && p.flash_sale_price) {
+                            effectivePrice = p.flash_sale_price;
+                        } else if (p.discount_price) {
+                            effectivePrice = p.discount_price;
+                        }
+                        const hasDiscount = effectivePrice < originalPrice;
+                        const discountPct = hasDiscount ? Math.round((1 - effectivePrice / originalPrice) * 100) : 0;
+
+                        grid.innerHTML += `
+                            <div class="grab-deal-card" onclick="window.location.href='product.html?id=${p.id}'">
+                                <div class="deal-image">
+                                    <img src="${img}" alt="${p.name}">
+                                </div>
+                                <div class="deal-info">
+                                    <div style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:4px;">${p.category_name || 'Deal'}</div>
+                                    <div class="deal-name">${p.name}</div>
+                                    <div class="deal-price">
+                                        <span class="sale-price">Rs ${effectivePrice.toFixed(0)}</span>
+                                        ${hasDiscount ? `<span class="orig-price">Rs ${originalPrice.toFixed(0)}</span><span class="discount-badge">${discountPct}% OFF</span>` : ''}
+                                    </div>
+                                    <button class="btn-grab">🛒 Grab This Deal!</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    grid.innerHTML = '<div class="no-deals-msg">🎉No deal available right now.<br>Admin panel se deals add karo!</div>';
+                }
+            } catch(e) {
+                document.getElementById('grabDealsGrid').innerHTML = '<div class="no-deals-msg" style="color:#f87171;">Server se connect nahi ho saka.</div>';
+            }
+        }
+
+        async function loadTrendingProducts() {
+            try {
+                const res = await apiFetch('/products?is_trending=true'); 
+                const grid = document.getElementById('trendingProducts');
+                
+                if(res.success && res.data.length > 0) {
+                    grid.innerHTML = '';
+                    res.data.slice(0, 8).forEach(p => {
+                        const img = p.primary_image ? `http://localhost:5000${p.primary_image}` : 'https://placehold.co/400?text=No+Image';
+                        let badges = '';
+                        if(p.is_flash_sale) badges += '<span class="product-badge">⚡ SALE</span>';
+
+                        // Effective selling price: flash_sale_price > discount_price > price
+                        let salePrice = null;
+                        if (p.is_flash_sale && p.flash_sale_price) {
+                            salePrice = p.flash_sale_price;
+                        } else if (p.discount_price) {
+                            salePrice = p.discount_price;
+                        }
+
+                        // Original crossed out on top, sale price in red below
+                        const finalPrice = salePrice
+                            ? `<span style="display:block; text-decoration:line-through; color:#aaa; font-size:0.9rem; font-weight:normal;">Rs ${p.price.toFixed(0)}</span><span style="display:block; color:#e53935; font-size:1.3rem; font-weight:900;">Rs ${salePrice.toFixed(0)}</span>`
+                            : `Rs ${p.price.toFixed(0)}`;
+
+                        grid.innerHTML += `
+                            <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'">
+                                ${badges}
+                                <div class="product-image">
+                                    <img src="${img}" alt="${p.name}">
+                                </div>
+                                <div class="product-details">
+                                    <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px;">${p.category_name || 'Uncategorized'}</div>
+                                    <div class="product-title">${p.name}</div>
+                                    <div class="product-price">${finalPrice}</div>
+                                    <button class="btn btn-secondary" style="width: 100%; border-radius: 8px;" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No trending products found. Admin needs to mark products as trending!</div>';
+                }
+            } catch(e) {
+                document.getElementById('trendingProducts').innerHTML = '<div style="color:red; grid-column: 1/-1; text-align:center;">Failed to connect to backend server. Make sure `node server.js` is running!</div>';
+            }
+        }
+
+        function searchToys() {
+            const val = document.getElementById('searchInput').value;
+            if(val) window.location.href = `shop.html?search=${encodeURIComponent(val)}`;
+        }
+    </script>
+</body>
+</html>

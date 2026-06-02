@@ -1,0 +1,196 @@
+openapi: 3.0.0
+info:
+  title: Cartify API
+  version: 1.0.0
+tags:
+  - name: Auth
+    description: User Login & Registration
+  - name: Categories
+    description: Category Management
+  - name: Products
+    description: Browsing and Admin catalog management
+  - name: Cart & Orders
+    description: End-to-end checkout APIs
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new Cartify User
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Ali Khan
+                email:
+                  type: string
+                  example: ali@yopmail.com
+                password:
+                  type: string
+                  example: MySecreto!
+                phone:
+                  type: string
+                  example: "03001234567"
+      responses:
+        '201':
+          description: Created
+
+  /api/auth/login:
+    post:
+      summary: Login to receive JWT Bearer Token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: ali@yopmail.com
+                password:
+                  type: string
+                  example: MySecreto!
+      responses:
+        '200':
+          description: Success
+          
+  /api/auth/profile:
+    get:
+      summary: Fetch logged in User profile
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Returns User Profile info
+
+  /api/categories:
+    get:
+      summary: Get all active categories
+      tags: [Categories]
+      responses:
+        '200':
+          description: Array of Category Objects
+          
+  /api/products:
+    get:
+      summary: Browse catalog items with filters
+      tags: [Products]
+      parameters:
+        - in: query
+          name: category_id
+          schema:
+            type: integer
+          description: Filter by cat id
+        - in: query
+          name: is_trending
+          schema:
+            type: boolean
+        - in: query
+          name: is_flash_sale
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Array of products
+          
+  /api/products/{id}:
+    get:
+      summary: Fetch complete single product details
+      tags: [Products]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deep representation including sizes/colors
+          
+  /api/cart:
+    get:
+      summary: Get active shopping cart items
+      tags: [Cart & Orders]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart Details
+          
+  /api/cart/add:
+    post:
+      summary: Push an item variation to cart
+      tags: [Cart & Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, quantity]
+              properties:
+                product_id:
+                  type: integer
+                  example: 1
+                color_name:
+                  type: string
+                  example: Red
+                size_name:
+                  type: string
+                  example: S
+                quantity:
+                  type: integer
+                  example: 2
+      responses:
+        '201':
+          description: Added
+
+  /api/orders:
+    post:
+      summary: Final Checkout -> Drops entire cart to Order Status
+      tags: [Cart & Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer_name, address_street, address_city]
+              properties:
+                customer_name:
+                  type: string
+                customer_email:
+                  type: string
+                customer_phone:
+                  type: string
+                address_street:
+                  type: string
+                address_city:
+                  type: string
+                address_state:
+                  type: string
+                address_pincode:
+                  type: string
+                shipping_charge:
+                  type: integer
+                  example: 50
+                payment_method:
+                  type: string
+                  example: "COD"
+      responses:
+        '201':
+          description: Order Place Successfully

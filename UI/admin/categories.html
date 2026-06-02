@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - Cartify Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            background: white; border-radius: 16px; padding: 40px;
+            width: 100%; max-width: 500px;
+            position: relative;
+        }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-family: 'Inter'; outline: none;
+        }
+        .form-group input:focus { border-color: var(--accent-blue); }
+        table img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand"><img src="../assets/images/logo.png" alt="Cartify"></div>
+        <ul class="nav-links">
+            <li><a href="index.html"><i class="fa fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="products.html"><i class="fa fa-box-open"></i> Product Catalog</a></li>
+            <li class="active"><a href="categories.html"><i class="fa fa-tags"></i> Categories</a></li>
+            <li><a href="orders.html"><i class="fa fa-shipping-fast"></i> Order Manager</a></li>
+            <li><a href="deals.html"><i class="fa fa-bolt"></i> Flash Sales</a></li>
+        </ul>
+        <ul class="nav-links" style="margin-top: auto; padding-bottom: 20px;">
+            <li><a href="../client/index.html" target="_blank"><i class="fa fa-external-link-alt"></i> View Store</a></li>
+            <li><a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 style="color: var(--bg-dark); font-size: 1.5rem;">Categories</h1>
+                <p style="color: var(--text-light); font-size: 0.9rem;">Organize your inventory</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()"><i class="fa fa-plus"></i> Add New Category</button>
+        </header>
+
+        <div class="data-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image Reference</th>
+                        <th>Category Name</th>
+                        <th>Hierarchy Role</th>
+                        <th>Internal Database Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="catTable">
+                    <tr><td colspan="4" style="text-align: center;">Scanning DB...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- NEW MODAL -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <i class="fa fa-times modal-close" onclick="closeModal()"></i>
+            <h2 style="margin-bottom: 25px; color: var(--bg-dark);">Push New Category</h2>
+            
+            <form id="addForm" onsubmit="handleCreation(event)">
+                <div class="form-group">
+                    <label>Category Title</label>
+                    <input type="text" id="cName" required placeholder="E.g. Wooden Toys or 3-4 Years">
+                </div>
+
+                <div class="form-group">
+                    <label>Marketing Image (JPG/PNG)</label>
+                    <input type="file" id="cImage" accept="image/*" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Parent Category (Optional)</label>
+                    <select id="cParent"><option value="">-- None (Top Level) --</option></select>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; font-size:1.1rem; padding:15px; margin-top:20px;" id="btnUpload">
+                    Insert Structure <i class="fa fa-check"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT CATEGORY MODAL -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <i class="fa fa-times modal-close" onclick="closeEditModal()"></i>
+            <h2 style="margin-bottom: 25px; color: var(--bg-dark);">Edit Category</h2>
+            
+            <form id="editForm" onsubmit="handleCategoryEdit(event)">
+                <input type="hidden" id="editCId">
+                <div class="form-group">
+                    <label>Category Title</label>
+                    <input type="text" id="editCName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Parent Category</label>
+                    <select id="editCParent"></select>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="editCActive" style="width: 20px; height: 20px;">
+                    <label for="editCActive" style="margin: 0; padding-top:5px; cursor: pointer;">Is Active</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; font-size:1.1rem; padding:15px; margin-top:20px;" id="btnEditUpload">
+                    Update Category <i class="fa fa-save"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHARED SERVICES -->
+    <script src="js/admin-mobile.js"></script>
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchCategories();
+        });
+
+        async function fetchCategories() {
+            try {
+                const res = await apiFetch('/categories');
+                const tbody = document.getElementById('catTable');
+                const sel = document.getElementById('cParent');
+                
+                if(res.success && res.data.length > 0) {
+                    let html = '';
+                    let optHtml = '<option value="">-- None (Top Level) --</option>';
+                    res.data.forEach(c => {
+                        const img = c.image_url ? `http://localhost:5000${c.image_url}` : 'https://placehold.co/100';
+                        html += `
+                            <tr>
+                                <td><img src="${img}"></td>
+                                <td><strong style="color:var(--bg-dark)">${c.name}</strong></td>
+                                <td>${c.parent_id ? 'Sub-Category' : 'Parent Level'}</td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.85rem;" onclick="editCat(${c.id})"><i class="fa fa-pen"></i> Edit</button>
+                                    <button class="btn btn-danger" style="padding: 6px 12px; font-size:0.85rem;" onclick="delCat(${c.id})"><i class="fa fa-trash"></i> Drop</button>
+                                </td>
+                            </tr>
+                        `;
+                        optHtml += `<option value="${c.id}">${c.name}</option>`;
+                    });
+                    tbody.innerHTML = html;
+                    sel.innerHTML = optHtml;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No tags loaded.</td></tr>';
+                }
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        function openModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('addModal').style.display = 'none'; document.getElementById('addForm').reset(); }
+
+        async function handleCreation(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnUpload');
+
+            const formData = new FormData();
+            const catName = document.getElementById('cName').value;
+            formData.append('name', catName);
+            formData.append('slug', catName.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+            
+            const pId = document.getElementById('cParent').value;
+            if(pId) formData.append('parent_id', pId);
+            
+            const imgFile = document.getElementById('cImage').files[0];
+            if(imgFile) formData.append('image', imgFile);
+
+            try {
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+                btn.disabled = true;
+
+                const res = await apiFetch('/admin/categories', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(res.success) {
+                    showToast('Structure Synced.', 'success');
+                    closeModal();
+                    await fetchCategories(); 
+                }
+            } catch(e) {
+                showToast(e.message, 'error');
+            } finally {
+                btn.innerHTML = 'Insert Structure <i class="fa fa-check"></i>';
+                btn.disabled = false;
+            }
+        }
+
+        async function delCat(id) {
+            if(!confirm(`WARNING: Deleting this category will move its products to Uncategorized. Continue?`)) return;
+            try {
+                const res = await apiFetch(`/admin/categories/${id}`, { method: 'DELETE' });
+                if(res.success) {
+                    showToast('Category deleted successfully', 'success');
+                    await fetchCategories();
+                } else {
+                    showToast(res.message || 'Failed to delete category', 'error');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; document.getElementById('editForm').reset(); }
+
+        async function editCat(id) {
+            try {
+                const res = await apiFetch(`/categories/${id}`);
+                if(res.success) {
+                    const c = res.data;
+                    document.getElementById('editCId').value = c.id;
+                    document.getElementById('editCName').value = c.name;
+                    
+                    const editCParent = document.getElementById('editCParent');
+                    editCParent.innerHTML = document.getElementById('cParent').innerHTML;
+                    editCParent.value = c.parent_id || '';
+                    
+                    document.getElementById('editCActive').checked = c.is_active;
+                    
+                    document.getElementById('editModal').style.display = 'flex';
+                }
+            } catch(e) {
+                showToast('Failed to load category details', 'error');
+            }
+        }
+
+        async function handleCategoryEdit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnEditUpload');
+            const id = document.getElementById('editCId').value;
+
+            const payload = {
+                name: document.getElementById('editCName').value,
+                parent_id: document.getElementById('editCParent').value,
+                is_active: document.getElementById('editCActive').checked ? 1 : 0
+            };
+
+            try {
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Updating...';
+                btn.disabled = true;
+
+                const res = await apiFetch(`/admin/categories/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.success) {
+                    showToast('Category Updated Successfully!', 'success');
+                    closeEditModal();
+                    await fetchCategories(); 
+                }
+            } catch(e) {
+                showToast(e.message || 'Error updating category', 'error');
+            } finally {
+                btn.innerHTML = 'Update Category <i class="fa fa-save"></i>';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cartify Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../shared/css/base.css">
+    
+    <style>
+        body { background-color: #fcebd5; }
+        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-box {
+            background-color: var(--bg-white);
+            padding: 50px 40px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-hover);
+            width: 100%;
+            max-width: 450px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header img {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .auth-header h2 {
+            font-size: 2rem;
+            color: var(--primary-blue);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #E9ECEF;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(42, 82, 138, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .auth-footer {
+            margin-top: 25px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--primary-blue);
+            font-weight: 800;
+            text-decoration: underline;
+        }
+
+        .auth-footer a:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 480px) {
+            .auth-box { padding: 28px 20px; }
+            .auth-header h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <a href="index.html">
+                    <img src="../assets/images/logo.png" alt="Cartify Logo">
+                </a>
+                <h2>Welcome Back!</h2>
+                <p>Login to track your Babymart orders.</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="mom@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-btn" id="loginBtn">Log In Securely</button>
+            </form>
+
+            <div class="auth-footer">
+                New to Cartify? <a href="register.html">Create an Account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Authenticating...';
+                btn.disabled = true;
+
+                const res = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (res.success && res.token) {
+                    // Save completely securely in local storage
+                    localStorage.setItem('cartify_token', res.token);
+                    
+                    showToast('Login Successful! Redirecting...', 'success');
+
+                    // Fetch user specific profile to know if Admin or User immediately
+                    const profileRes = await apiFetch('/auth/profile');
+                    if(profileRes.success) {
+                        localStorage.setItem('cartify_user', JSON.stringify(profileRes.data));
+                        
+                        setTimeout(() => {
+                            if(profileRes.data.role === 'admin') {
+                                window.location.href = '../admin/index.html'; // Admins go to Dashboard natively
+                            } else {
+                                window.location.href = 'index.html';          // Clients go to Storefront natively
+                            }
+                        }, 1000);
+                    }
+                }
+
+            } catch(e) {
+                showToast(e.message || 'Invalid credentials.', 'error');
+                btn.innerHTML = 'Log In Securely';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

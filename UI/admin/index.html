@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartify Core Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="../shared/js/api.js"></script>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="../assets/images/logo.png" alt="Cartify">
+        </div>
+
+        <ul class="nav-links">
+            <li class="active"><a href="index.html"><i class="fa fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="products.html"><i class="fa fa-box-open"></i> Product Catalog</a></li>
+            <li><a href="categories.html"><i class="fa fa-tags"></i> Categories</a></li>
+            <li><a href="orders.html"><i class="fa fa-shipping-fast"></i> Order Manager</a></li>
+            <li><a href="deals.html"><i class="fa fa-bolt"></i> Flash Sales</a></li>
+            <li><a href="users.html"><i class="fa fa-users"></i> Customers</a></li>
+        </ul>
+        
+        <ul class="nav-links" style="margin-top: auto; padding-bottom: 20px;">
+            <li><a href="../client/index.html" target="_blank"><i class="fa fa-external-link-alt"></i> View Store</a></li>
+            <li><a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> Logout Engine</a></li>
+        </ul>
+    </aside>
+
+    <!-- CONTENT REGION -->
+    <main class="main-content">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div>
+                <h1 style="color: var(--bg-dark); font-size: 1.5rem;">Network Dashboard</h1>
+                <p style="color: var(--text-light); font-size: 0.9rem;">Real-time E-commerce Performance Metrics</p>
+            </div>
+            <div class="topbar-right">
+                <i class="fa fa-bell" style="color: var(--text-light); cursor: pointer; font-size:1.2rem;"></i>
+                <div class="avatar"><i class="fa fa-shield-alt"></i></div>
+                <div style="font-size: 0.95rem;">
+                    Admin Master
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI GRID -->
+        <div class="metrics-grid">
+            <div class="metric-card blue">
+                <div class="metric-icon"><i class="fa fa-dollar-sign"></i></div>
+                <div class="metric-info">
+                    <h4>Total Cash Flow</h4>
+                    <h2 id="kpiRevenue"><i class="fa fa-spinner fa-spin"></i></h2>
+                </div>
+            </div>
+
+            <div class="metric-card green">
+                <div class="metric-icon"><i class="fa fa-shopping-bag"></i></div>
+                <div class="metric-info">
+                    <h4>Purchased Orders</h4>
+                    <h2 id="kpiOrders"><i class="fa fa-spinner fa-spin"></i></h2>
+                </div>
+            </div>
+
+            <div class="metric-card orange">
+                <div class="metric-icon"><i class="fa fa-users"></i></div>
+                <div class="metric-info">
+                    <h4>Registered Users</h4>
+                    <h2 id="kpiUsers"><i class="fa fa-spinner fa-spin"></i></h2>
+                </div>
+            </div>
+
+            <div class="metric-card red">
+                <div class="metric-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="metric-info">
+                    <h4>Low Stock Warnings</h4>
+                    <h2 id="kpiWarnings"><i class="fa fa-spinner fa-spin"></i></h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- TWO COLUMN ALERTS & TABLES -->
+        <div class="dashboard-grid">
+            <!-- Latest Orders Card -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3>Recent Transactions</h3>
+                    <button class="btn btn-primary" onclick="window.location.href='orders.html'">View All Core</button>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Name</th>
+                            <th>Total Billed</th>
+                            <th>Payment</th>
+                            <th>Status Matrix</th>
+                        </tr>
+                    </thead>
+                    <tbody id="latestOrdersTable">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-light);">Loading network...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Urgent Alerts Card -->
+            <div class="data-card" style="background: #fffafa; border-color: #fca5a5;">
+                <div class="card-header">
+                    <h3 style="color: var(--danger);"><i class="fa fa-exclamation-circle"></i> Immediate Action</h3>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;" id="alertsBox">
+                    <p style="color: var(--text-light);">Scanning database for warnings...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/admin-mobile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ensureAdmin();
+            await fetchDashboardStats();
+        });
+
+        async function ensureAdmin() {
+            try {
+                // Hitting the secure profile endpoint
+                const res = await apiFetch('/auth/profile');
+                if(!res.success || res.data.role !== 'admin') {
+                    alert("SECURITY EXCEPTION: Area restricted to Administrative Personnel only.");
+                    window.location.href = '../client/login.html';
+                }
+            } catch(e) {
+                window.location.href = '../client/login.html';
+            }
+        }
+
+        async function fetchDashboardStats() {
+            try {
+                // Calls the complex SQL Aggregation written in the backend
+                const statRes = await apiFetch('/admin/dashboard/stats');
+                
+                if(statRes.success) {
+                    const d = statRes.data;
+                    document.getElementById('kpiRevenue').innerText = `Rs ${d.monthly_revenue || 0}`;
+                    document.getElementById('kpiOrders').innerText = d.pending_orders || 0;
+                    document.getElementById('kpiUsers').innerText = d.total_users || 0;
+                    document.getElementById('kpiWarnings').innerText = d.low_stock_products ? d.low_stock_products.length : 0;
+
+                    renderLatestOrders(d.recent_orders || []);
+                    renderAlerts(d.low_stock_products || []);
+                }
+            } catch(e) {
+                console.error("Dashboard Failed:", e);
+                showToast("Admin API disconnected. Start your local server.", "error");
+            }
+        }
+
+        function renderLatestOrders(orders) {
+            const tbody = document.getElementById('latestOrdersTable');
+            if(orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders placed yet.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            orders.slice(0, 5).forEach(o => {
+                let badgeClass = 'pending';
+                if(o.order_status === 'Shipped') badgeClass = 'shipped';
+                if(o.order_status === 'Delivered') badgeClass = 'delivered';
+
+                html += `
+                    <tr>
+                        <td><strong>#${o.order_number || o.id}</strong></td>
+                        <td>${o.customer_name}</td>
+                        <td style="font-weight: bold; color: var(--accent-blue)">Rs ${o.total_amount ? o.total_amount.toFixed(0) : 0}</td>
+                        <td><i class="fa fa-money-bill-wave"></i> COD</td>
+                        <td><span class="status-badge ${badgeClass}">${o.order_status || 'Pending'}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderAlerts(lowStockToys) {
+            const box = document.getElementById('alertsBox');
+            if(lowStockToys.length === 0) {
+                box.innerHTML = '<div style="color: var(--success); font-weight: bold;"><i class="fa fa-check"></i> All catalog supplies are stable.</div>';
+                return;
+            }
+
+            let html = '';
+            lowStockToys.forEach(t => {
+                html += `
+                    <div style="background: white; border: 1px solid #fca5a5; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight: bold; color: var(--danger);">${t.name}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-light);">LOW STOCK</div>
+                        </div>
+                        <div style="font-weight: 800; font-size: 1.5rem; color: var(--danger);">
+                            ${t.stock} <span style="font-size:0.8rem">LEFT</span>
+                        </div>
+                    </div>
+                `;
+            });
+            box.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

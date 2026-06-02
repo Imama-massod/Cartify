@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Toys - Cartify Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            background: white; border-radius: 16px; padding: 40px;
+            width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto;
+            position: relative;
+        }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-family: 'Inter'; outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--accent-blue); }
+        table img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+
+        /* Flash Sale Popup */
+        .flash-popup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .flash-popup {
+            background: white; border-radius: 20px; padding: 40px;
+            width: 100%; max-width: 480px; position: relative;
+            border-top: 6px solid #f59e0b;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .flash-popup h3 { font-size: 1.4rem; color: #92400e; margin-bottom: 6px; }
+        .flash-popup .sub { color: #6b7280; font-size: 0.9rem; margin-bottom: 24px; }
+        .flash-popup .price-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .flash-popup .original-price-tag {
+            background: #fee2e2; color: #991b1b; padding: 8px 16px;
+            border-radius: 8px; font-weight: bold; font-size: 1rem;
+        }
+        .flash-popup .arrow { font-size: 1.4rem; color: #6b7280; }
+        .flash-tag { display: inline-block; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white;
+            padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
+        .grab-tag { display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: white;
+            padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="brand"><img src="../assets/images/logo.png" alt="Cartify"></div>
+        <ul class="nav-links">
+            <li><a href="index.html"><i class="fa fa-chart-pie"></i> Dashboard</a></li>
+            <li class="active"><a href="products.html"><i class="fa fa-box-open"></i> Product Catalog</a></li>
+            <li><a href="categories.html"><i class="fa fa-tags"></i> Categories</a></li>
+            <li><a href="orders.html"><i class="fa fa-shipping-fast"></i> Order Manager</a></li>
+            <li><a href="deals.html"><i class="fa fa-bolt"></i> Flash Sales</a></li>
+        </ul>
+        <ul class="nav-links" style="margin-top: auto; padding-bottom: 20px;">
+            <li><a href="../client/index.html" target="_blank"><i class="fa fa-external-link-alt"></i> View Store</a></li>
+            <li><a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 style="color: var(--bg-dark); font-size: 1.5rem;">Product Master List</h1>
+                <p style="color: var(--text-light); font-size: 0.9rem;">Manage all toys, stock, and variations</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()"><i class="fa fa-plus"></i> Add New Product Core</button>
+        </header>
+
+        <!-- FLASH SALE PRICE POPUP -->
+        <div class="flash-popup-overlay" id="flashPricePopup">
+            <div class="flash-popup">
+                <i class="fa fa-times modal-close" onclick="closeFlashPopup()" style="position:absolute;top:16px;right:20px;font-size:1.3rem;cursor:pointer;color:#9ca3af;"></i>
+                <h3>⚡ Set Flash Sale Price</h3>
+                <p class="sub" id="flashPopupProductName">Loading product details...</p>
+
+                <div class="price-row">
+                    <div>
+                        <div style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Original Price</div>
+                        <div class="original-price-tag" id="flashOriginalPrice">Rs ---</div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Flash Sale Price (Client pe dikhe gi)</div>
+                        <input type="number" id="flashSalePrice" step="0.01" min="1" placeholder="Enter discounted price" style="width:100%;padding:12px;border:2px solid #f59e0b;border-radius:8px;font-size:1rem;font-weight:700;color:#92400e;outline:none;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size:0.85rem;color:#6b7280;">Flash Sale End Date & Time (Optional)</label>
+                    <input type="datetime-local" id="flashSaleEnd" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:0.9rem;">
+                </div>
+
+                <div style="background:#fef3c7;border-radius:8px;padding:12px;margin-bottom:20px;font-size:0.85rem;color:#92400e;">
+                    <i class="fa fa-info-circle"></i> Client side pe <strong>Flash Sale Price</strong> kati hui dikhegi. Order place karte waqt bhi yahi price use hogi.
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;background:linear-gradient(135deg,#f59e0b,#ef4444);border:none;" onclick="saveFlashSalePrice()">
+                    <i class="fa fa-bolt"></i> Flash Sale Activate Karo
+                </button>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Artifact</th>
+                        <th>Product Info</th>
+                        <th>Category</th>
+                        <th>Pricing ($)</th>
+                        <th>Live Stock</th>
+                        <th>Admin Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogTable">
+                    <tr><td colspan="6" style="text-align: center;">Scanning catalog...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="js/admin-mobile.js"></script>
+
+    <!-- NEW PRODUCT UPLOAD MODAL -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <i class="fa fa-times modal-close" onclick="closeModal()"></i>
+            <h2 style="margin-bottom: 25px; color: var(--bg-dark);">Push New Toy Payload</h2>
+            
+            <form id="addProductForm" onsubmit="handleProductCreation(event)">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Target Category</label>
+                        <select id="catSelect" required><option value="">Loading Systems...</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Toy Name</label>
+                        <input type="text" id="pName" required placeholder="Gigantic Yellow Excavator">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Marketing Description</label>
+                    <textarea id="pDesc" rows="3" required></textarea>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Base Price (Rs)</label>
+                        <input type="number" step="0.01" id="pPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Available Stock Amount</label>
+                        <input type="number" id="pStock" required min="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Age Group</label>
+                    <select id="pAge" required>
+                        <option value="">-- Select Age Range --</option>
+                        <option value="0-2">0 - 2 Years</option>
+                        <option value="3-4">3 - 4 Years</option>
+                        <option value="5-7">5 - 7 Years</option>
+                        <option value="8-11">8 - 11 Years</option>
+                        <option value="12+">12+ Years</option>
+                    </select>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Available Colors (Comma Separated)</label>
+                        <input type="text" id="pColors" placeholder="Red, Blue, Green">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Sizes (Comma Separated)</label>
+                        <input type="text" id="pSizes" placeholder="Small, Large">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="pTrending" style="width: 20px; height: 20px;">
+                        <label for="pTrending" style="margin: 0; padding-top:5px; cursor: pointer;">Add to Trending Section 🔥</label>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="pGrabDeal" style="width: 20px; height: 20px;">
+                        <label for="pGrabDeal" style="margin: 0; padding-top:5px; cursor: pointer;">Add to Grab Deals 🛒</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Main Product Image (JPG/PNG)</label>
+                    <input type="file" id="pImage" accept="image/*" required>
+                    <p style="font-size:0.8rem; color:var(--text-light); margin-top:5px;">Will be securely routed to disk via Multer.</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; font-size:1.1rem; padding:15px; margin-top:10px;" id="btnUpload">
+                    Construct & Upload Entity <i class="fa fa-upload"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <i class="fa fa-times modal-close" onclick="closeEditModal()"></i>
+            <h2 style="margin-bottom: 25px; color: var(--bg-dark);">Edit Product</h2>
+            
+            <form id="editProductForm" onsubmit="handleProductEdit(event)">
+                <input type="hidden" id="editPid">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Target Category</label>
+                        <select id="editCatSelect" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Toy Name</label>
+                        <input type="text" id="editPName" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Marketing Description</label>
+                    <textarea id="editPDesc" rows="3" required></textarea>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Base Price (Rs)</label>
+                        <input type="number" step="0.01" id="editPPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Available Stock Amount</label>
+                        <input type="number" id="editPStock" required min="0">
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="editPGrabDeal" style="width: 20px; height: 20px;">
+                    <label for="editPGrabDeal" style="margin: 0; padding-top:5px; cursor: pointer;">Add to Grab Deals 🛒</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; font-size:1.1rem; padding:15px; margin-top:10px;" id="btnEditUpload">
+                    Update Entity <i class="fa fa-save"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ensureAdmin();
+            await fetchProducts();
+            await populateCats();
+        });
+
+        async function ensureAdmin() {
+            try {
+                const res = await apiFetch('/auth/profile');
+                if(!res.success || res.data.role !== 'admin') window.location.href = '../client/login.html';
+            } catch(e) { window.location.href = '../client/login.html'; }
+        }
+
+        async function fetchProducts() {
+            try {
+                const res = await apiFetch('/products');
+                const tbody = document.getElementById('catalogTable');
+                if(res.success && res.data.length > 0) {
+                    let html = '';
+                    res.data.forEach(p => {
+                        const img = p.primary_image ? `http://localhost:5000${p.primary_image}` : 'https://placehold.co/100';
+                        let stockHtml = `<span style="color:var(--success); font-weight:bold;">${p.stock}</span>`;
+                        if(p.stock < 10) stockHtml = `<span style="color:var(--danger); font-weight:bold;">${p.stock} Low</span>`;
+                        if(p.stock === 0) stockHtml = `<span style="color:var(--danger); font-weight:bold;">SOLD OUT</span>`;
+
+                        // Badges
+                        let nameBadges = '';
+                        if(p.is_flash_sale) nameBadges += `<span class="flash-tag">⚡ FLASH</span>`;
+                        if(p.is_grab_deal)  nameBadges += `<span class="grab-tag">🛒 GRAB DEAL</span>`;
+
+                        // Price display
+                        let priceHtml = `Rs ${p.price.toFixed(0)}`;
+                        if(p.is_flash_sale && p.flash_sale_price) {
+                            priceHtml = `<span style="text-decoration:line-through;color:#9ca3af;font-size:0.85rem;">Rs ${p.price.toFixed(0)}</span><br><span style="color:#ef4444;font-weight:900;">Rs ${p.flash_sale_price.toFixed(0)}</span>`;
+                        }
+
+                        html += `
+                            <tr>
+                                <td><img src="${img}"></td>
+                                <td>
+                                    <strong style="color:var(--bg-dark)">${p.name}</strong>
+                                    ${nameBadges}<br>
+                                    <small style="color:var(--text-light)">ID: 00${p.id}</small>
+                                </td>
+                                <td><span class="status-badge" style="background:#f1f5f9; color:var(--text-light); border:1px solid #e2e8f0;">${p.category_name || '-'}</span></td>
+                                <td style="font-weight:bold;">${priceHtml}</td>
+                                <td>${stockHtml}</td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding: 6px 10px; font-size:0.8rem; margin-bottom:4px;" onclick="editProduct(${p.id})"><i class="fa fa-pen"></i> Edit</button>
+                                    <button class="btn" style="padding: 6px 10px; font-size:0.8rem; margin-bottom:4px; background:#f59e0b; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="openFlashPopup(${p.id}, '${p.name.replace(/'/g,"\\'")}'  , ${p.price})"><i class="fa fa-bolt"></i> Flash Sale</button>
+                                    <button class="btn btn-danger" style="padding: 6px 10px; font-size:0.8rem;" onclick="deleteProduct(${p.id})"><i class="fa fa-trash"></i> Drop</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No products in database.</td></tr>';
+                }
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function populateCats() {
+            try {
+                const res = await apiFetch('/categories');
+                const select = document.getElementById('catSelect');
+                if(res.success && res.data && res.data.length > 0) {
+                    let html = '<option value="">-- Select Parent System --</option>';
+                    res.data.forEach(c => html += `<option value="${c.id}">${c.name}</option>`);
+                    select.innerHTML = html;
+                } else {
+                    select.innerHTML = '<option value="">No Categories Found! Create one first.</option>';
+                }
+            } catch(e) { 
+                console.error("Cat load fail", e); 
+                document.getElementById('catSelect').innerHTML = '<option value="">Error loading</option>';
+            }
+        }
+
+        function openModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('addModal').style.display = 'none'; document.getElementById('addProductForm').reset(); }
+
+        async function handleProductCreation(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnUpload');
+
+            // Construct Multipart Form Data specifically for Multer consumption natively in browser
+            const formData = new FormData();
+            formData.append('category_id', document.getElementById('catSelect').value);
+            
+            const pName = document.getElementById('pName').value;
+            formData.append('name', pName);
+            // JS magic to parse real strings into URLs
+            formData.append('slug', pName.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+            
+            formData.append('description', document.getElementById('pDesc').value);
+            formData.append('price', document.getElementById('pPrice').value);
+            formData.append('stock', document.getElementById('pStock').value);
+            formData.append('age_group', document.getElementById('pAge').value);
+            
+            // Backend Flags 
+            formData.append('is_trending', document.getElementById('pTrending').checked ? 1 : 0);
+            formData.append('is_grab_deal', document.getElementById('pGrabDeal').checked ? 1 : 0);
+            
+            // Arrays strictly formatted to backend SQL Data Object requirements
+            const cols = document.getElementById('pColors').value;
+            if(cols.trim().length > 0) {
+                const colArray = cols.split(',').map(c => ({ color_name: c.trim() }));
+                formData.append('colors', JSON.stringify(colArray));
+            }
+            
+            const sizs = document.getElementById('pSizes').value;
+            if(sizs.trim().length > 0) {
+                const sizArray = sizs.split(',').map(s => ({ size_name: s.trim() }));
+                formData.append('sizes', JSON.stringify(sizArray));
+            }
+
+            // Attach Secure Image
+            const imgFile = document.getElementById('pImage').files[0];
+            if(imgFile) formData.append('images', imgFile);
+
+            try {
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Writing to Core...';
+                btn.disabled = true;
+
+                // Send FormData directly bypassing standard JSON header (handled intelligently by apiFetch)
+                const res = await apiFetch('/admin/products', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(res.success) {
+                    showToast('Product Successfully Mounted in System!', 'success');
+                    closeModal();
+                    await fetchProducts(); // Resync Grid
+                }
+            } catch(e) {
+                showToast(e.message || 'Error configuring product record', 'error');
+            } finally {
+                btn.innerHTML = 'Construct & Upload Entity <i class="fa fa-upload"></i>';
+                btn.disabled = false;
+            }
+        }
+        
+        async function deleteProduct(id) {
+            if(!confirm(`WARNING: Executing a hard deletion on Product ${id}. All correlated data variations will be swept via cascade. Continue?`)) return;
+            try {
+                const res = await apiFetch(`/admin/products/${id}`, { method: 'DELETE' });
+                if(res.success) {
+                    showToast('Product deleted successfully', 'success');
+                    await fetchProducts();
+                } else {
+                    showToast(res.message || 'Failed to delete product', 'error');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; document.getElementById('editProductForm').reset(); }
+
+        // ===== FLASH SALE PRICE POPUP =====
+        let _flashProductId = null;
+
+        function openFlashPopup(id, name, originalPrice) {
+            _flashProductId = id;
+            document.getElementById('flashPopupProductName').innerText = `Product: ${name}`;
+            document.getElementById('flashOriginalPrice').innerText = `Rs ${parseFloat(originalPrice).toFixed(0)}`;
+            document.getElementById('flashSalePrice').value = '';
+            document.getElementById('flashSaleEnd').value = '';
+            document.getElementById('flashPricePopup').style.display = 'flex';
+        }
+
+        function closeFlashPopup() {
+            document.getElementById('flashPricePopup').style.display = 'none';
+            _flashProductId = null;
+        }
+
+        async function saveFlashSalePrice() {
+            const price = document.getElementById('flashSalePrice').value;
+            const endDate = document.getElementById('flashSaleEnd').value;
+
+            if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+                showToast('Flash sale price enter karo (0 se zyada)', 'error');
+                return;
+            }
+
+            try {
+                const res = await apiFetch(`/admin/products/${_flashProductId}/flash-sale-price`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        flash_sale_price: parseFloat(price),
+                        flash_sale_end: endDate || null
+                    })
+                });
+
+                if (res.success) {
+                    showToast('⚡ Flash Sale Price set ho gayi!', 'success');
+                    closeFlashPopup();
+                    await fetchProducts();
+                } else {
+                    showToast(res.message || 'Error setting flash sale price', 'error');
+                }
+            } catch(e) {
+                showToast(e.message || 'Server error', 'error');
+            }
+        }
+
+        async function editProduct(id) {
+            try {
+                const res = await apiFetch(`/products/${id}`);
+                if(res.success) {
+                    const p = res.data;
+                    document.getElementById('editPid').value = p.id;
+                    document.getElementById('editPName').value = p.name;
+                    document.getElementById('editPDesc').value = p.description;
+                    document.getElementById('editPPrice').value = p.price;
+                    document.getElementById('editPStock').value = p.stock;
+                    document.getElementById('editPGrabDeal').checked = p.is_grab_deal == 1;
+                    
+                    const editCatSelect = document.getElementById('editCatSelect');
+                    editCatSelect.innerHTML = document.getElementById('catSelect').innerHTML;
+                    editCatSelect.value = p.category_id || '';
+                    
+                    document.getElementById('editModal').style.display = 'flex';
+                }
+            } catch(e) {
+                showToast('Failed to load product details', 'error');
+            }
+        }
+
+        async function handleProductEdit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnEditUpload');
+            const id = document.getElementById('editPid').value;
+
+            const payload = {
+                name: document.getElementById('editPName').value,
+                category_id: document.getElementById('editCatSelect').value,
+                description: document.getElementById('editPDesc').value,
+                price: document.getElementById('editPPrice').value,
+                stock: document.getElementById('editPStock').value,
+                is_grab_deal: document.getElementById('editPGrabDeal').checked ? 1 : 0
+            };
+
+            try {
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Updating...';
+                btn.disabled = true;
+
+                const res = await apiFetch(`/admin/products/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.success) {
+                    showToast('Product Updated Successfully!', 'success');
+                    closeEditModal();
+                    await fetchProducts(); 
+                }
+            } catch(e) {
+                showToast(e.message || 'Error updating product', 'error');
+            } finally {
+                btn.innerHTML = 'Update Entity <i class="fa fa-save"></i>';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

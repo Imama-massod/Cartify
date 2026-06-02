@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Cartify Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../shared/css/base.css">
+    
+    <style>
+        body { background-color: #fcebd5; }
+        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .auth-box {
+            background-color: var(--bg-white);
+            padding: 50px 40px;
+            border-radius: var(--border-radius-lg)ccfy;
+            box-shadow: var(--shadow-hover);
+            width: 100%;
+            max-width: 550px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header img {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .auth-header h2 {
+            font-size: 2rem;
+            color: var(--primary-blue);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #E9ECEF;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(42, 82, 138, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .auth-footer {
+            margin-top: 25px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--primary-blue);
+            font-weight: 800;
+            text-decoration: underline;
+        }
+
+        .auth-footer a:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 480px) {
+            .auth-box { padding: 28px 20px; }
+            .auth-header h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <a href="index.html">
+                    <img src="../assets/images/logo.png" alt="Cartify Logo">
+                </a>
+                <h2>Join Cartify Family!</h2>
+                <p>Register safely to receive our best weekly toy deals.</p>
+            </div>
+
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="name" placeholder="E.g., Sarah Smith" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="sarah@example.com" required>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="phone" placeholder="03XXXXXXXXX">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Secure Password</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-btn" id="regBtn">Create My Account</button>
+            </form>
+
+            <div class="auth-footer">
+                Already part of the Cartify Family? <a href="login.html">Log in here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARED SERVICES -->
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Creating Profile...';
+                btn.disabled = true;
+
+                const res = await apiFetch('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.success && res.token) {
+                    // Registration logs them in automatically via response JSON
+                    localStorage.setItem('cartify_token', res.token);
+                    showToast('Welcome to Cartify! Registered Successfully!', 'success');
+
+                    const profileRes = await apiFetch('/auth/profile');
+                    if(profileRes.success) {
+                        localStorage.setItem('cartify_user', JSON.stringify(profileRes.data));
+                        setTimeout(() => window.location.href = 'index.html', 1500);
+                    }
+                }
+
+            } catch(e) {
+                showToast(e.message || 'Email might already be taken.', 'error');
+                btn.innerHTML = 'Create My Account';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

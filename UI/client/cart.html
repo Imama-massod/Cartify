@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Cartify Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../shared/css/base.css">
+    
+    <style>
+        .cart-wrapper {
+            display: flex;
+            gap: 40px;
+            margin-top: 50px;
+            min-height: 50vh;
+        }
+
+        .cart-items {
+            flex: 2;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary-blue);
+            margin-bottom: 30px;
+        }
+
+        .cart-container {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cart-item-row {
+            display: grid;
+            grid-template-columns: 100px 1fr auto auto;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid #EEE;
+        }
+
+        .cart-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-img {
+            width: 100px;
+            height: 100px;
+            background: #F8F9FA;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .item-img img { width: 80%; object-fit: contain; }
+
+        .item-details h4 {
+            font-size: 1.2rem;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+        }
+        .item-details p { color: var(--text-muted); font-size: 0.9rem; }
+        .var-badge {
+            display: inline-block;
+            background: #f1f3f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #F8F9FA;
+            padding: 5px 10px;
+            border-radius: 30px;
+            border: 1px solid #ddd;
+        }
+
+        .qty-controls button {
+            border: none;
+            background: transparent;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--primary-blue);
+        }
+
+        .item-total {
+            font-weight: 800;
+            font-size: 1.2rem;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .remove-btn {
+            color: var(--accent-red);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+        .remove-btn:hover { color: #bf2600; transform: scale(1.1); }
+
+        /* Order Summary Box */
+        .order-summary {
+            flex: 1;
+            background: #F8F9FA;
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            border: 2px solid #E9ECEF;
+            align-self: flex-start;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            font-size: 1.1rem;
+        }
+
+        .summary-total {
+            border-top: 2px dashed #ccc;
+            padding-top: 20px;
+            margin-top: 10px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+        .empty-cart i { font-size: 4rem; color: #ddd; margin-bottom: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- REUSABLE MAIN HEADER -->
+    <header class="main-header">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
+            <a href="index.html" class="logo-wrapper">
+                <img src="../assets/images/logo.png" alt="Cartify Logo">
+            </a>
+            
+            <div id="authLinks" style="display: flex; gap: 20px; font-weight: bold; align-items: center;">
+                <a href="index.html" style="color: var(--text-muted)">Home</a>
+                <a href="shop.html" style="color: var(--text-muted)">Catalog</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container cart-wrapper">
+        <div class="cart-items">
+            <div class="cart-header">
+                <h2>Your Shopping Cart</h2>
+                <h4 id="lblCount" style="color: var(--text-muted)">0 items</h4>
+            </div>
+
+            <div class="cart-container" id="cartListTarget">
+                <div class="empty-cart">
+                    <i class="fa fa-spinner fa-spin"></i>
+                    <h2>Syncing securely with Database...</h2>
+                </div>
+            </div>
+        </div>
+
+        <aside class="order-summary" id="summaryBlock" style="display: none;">
+            <h3 style="margin-bottom: 25px; color: var(--primary-blue);">Order Summary</h3>
+            
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="txtSub">---</span>
+            </div>
+            <div class="summary-row">
+                <span>Estimated Shipping</span>
+                <span id="txtShip">Rs 500.00</span>
+            </div>
+            
+            <div class="summary-row summary-total">
+                <span>Total</span>
+                <span id="txtTotal">---</span>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 30px; font-size: 1.2rem; padding: 18px;" onclick="window.location.href='checkout.html'">
+                Proceed to Checkout <i class="fa fa-arrow-right"></i>
+            </button>
+            <p style="text-align: center; font-size: 0.8rem; margin-top: 15px; color: var(--text-muted);">
+                <i class="fa fa-lock"></i> Secure 256-bit Encrypted Checkout
+            </p>
+        </aside>
+    </div>
+
+    <script src="../shared/js/api.js"></script>
+
+    <script>
+        let globalCartItems = [];
+        const FIXED_SHIPPING = 500.00;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('cartify_token');
+            if(!token) {
+                document.getElementById('cartListTarget').innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fa fa-lock"></i>
+                        <h2>Login Required</h2>
+                        <p>You must be logged in to view your cart.</p>
+                        <a href="login.html" class="btn btn-primary mt-4">Login Now</a>
+                    </div>
+                `;
+                return;
+            }
+
+            await fetchCart();
+        });
+
+        async function fetchCart() {
+            try {
+                const res = await apiFetch('/cart');
+                globalCartItems = res.data || [];
+                renderCart();
+            } catch(e) {
+                document.getElementById('cartListTarget').innerHTML = `<h2 style="color:red; text-align:center">Error loading cart. ${e.message}</h2>`;
+            }
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartListTarget');
+            const summary = document.getElementById('summaryBlock');
+            const countLbl = document.getElementById('lblCount');
+
+            if(globalCartItems.length === 0) {
+                countLbl.innerText = "0 items";
+                summary.style.display = 'none';
+                list.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fa fa-shopping-basket"></i>
+                        <h2>Your cart is completely empty!</h2>
+                        <p>Looks like you haven't added any toys yet.</p>
+                        <a href="shop.html" class="btn btn-primary mt-4">Start Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+
+            summary.style.display = 'block';
+            let html = '';
+            let subtotal = 0;
+            let totalQty = 0;
+
+            globalCartItems.forEach(item => {
+                // Effective selling price: flash_sale_price > discount_price > price
+                let activePrice = item.price;
+                if (item.is_flash_sale && item.flash_sale_price) {
+                    activePrice = item.flash_sale_price;
+                } else if (item.discount_price) {
+                    activePrice = item.discount_price;
+                }
+                const hasDiscount = activePrice < item.price;
+                const lineTotal = activePrice * item.quantity;
+                subtotal += lineTotal;
+                totalQty += item.quantity;
+
+                const img = item.image ? `http://localhost:5000${item.image}` : 'https://placehold.co/100';
+                
+                let vars = '';
+                if(item.color_name) vars += `<span class="var-badge"><i class="fa fa-palette"></i> ${item.color_name}</span>`;
+                if(item.size_name) vars += `<span class="var-badge"><i class="fa fa-ruler"></i> ${item.size_name}</span>`;
+
+                // Price display: original crossed out if discounted
+                const priceDisplay = hasDiscount
+                    ? `<span style="text-decoration:line-through; color:#aaa; font-size:0.85rem;">Rs ${item.price.toFixed(0)}</span> <span style="color:#e53935; font-weight:900; font-size:1.05rem;">Rs ${activePrice.toFixed(0)}</span>`
+                    : `<span style="color:var(--accent-red); font-weight:bold;">Rs ${activePrice.toFixed(0)}</span>`;
+
+                html += `
+                    <div class="cart-item-row">
+                        <div class="item-img"><img src="${img}"></div>
+                        <div class="item-details">
+                            <h4 onclick="window.location.href='product.html?id=${item.product_id}'" style="cursor:pointer">${item.name}</h4>
+                            <div style="margin-bottom: 5px;">${priceDisplay}</div>
+                            <div>${vars}</div>
+                        </div>
+                        
+                        <div class="qty-controls">
+                            <button onclick="updateQty(${item.cart_item_id}, ${item.quantity - 1})">-</button>
+                            <span style="font-weight: 800; min-width:20px; text-align:center;">${item.quantity}</span>
+                            <button onclick="updateQty(${item.cart_item_id}, ${item.quantity + 1})">+</button>
+                        </div>
+                        
+                        <div style="display:flex; align-items:center; gap: 20px;">
+                            <div class="item-total">Rs ${lineTotal.toFixed(0)}</div>
+                            <button class="remove-btn" onclick="removeItem(${item.cart_item_id})" title="Remove"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+            countLbl.innerText = `${totalQty} items`;
+            
+            // Render Math
+            document.getElementById('txtSub').innerText = `Rs ${subtotal.toFixed(0)}`;
+            document.getElementById('txtTotal').innerText = `Rs ${(subtotal + FIXED_SHIPPING).toFixed(0)}`;
+        }
+
+        async function updateQty(cartId, newQty) {
+            if(newQty < 1) {
+                removeItem(cartId);
+                return;
+            }
+
+            try {
+                // Update specific item purely in DB securely
+                await apiFetch(`/cart/update/${cartId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ quantity: newQty })
+                });
+                await fetchCart(); // Re-sync
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function removeItem(cartId) {
+            if(!confirm("Are you sure you want to remove this toy from your cart?")) return;
+            try {
+                await apiFetch(`/cart/remove/${cartId}`, { method: 'DELETE' });
+                showToast('Toy securely removed.', 'success');
+                await fetchCart(); // Re-sync
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
